@@ -1,0 +1,181 @@
+name: "CodeQL Security Scan"
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 0 * * *'  # Run daily at midnight UTC
+  workflow_dispatch:  # Allow manual triggers
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'javascript', 'typescript' ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ${{ matrix.language }}
+          config-file: .github/codeql/codeql-config.yml
+          queries: +security-and-quality,security-extended
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Project
+        run: npm run build
+        env:
+          CI: true
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          category: "/language:${{matrix.language}}"
+          output: 'results/${{matrix.language}}'
+
+      - name: Upload SARIF results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: results/${{matrix.language}}/results.sarif
+          category: "/language:${{matrix.language}}"
+
+  report:
+    name: Process Analysis Results
+    needs: analyze
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Download Analysis Results
+        uses: actions/download-artifact@v3
+        with:
+          name: codeql-results
+          path: results
+
+      - name: Generate Security Report
+        run: |
+          echo "# Security Analysis Report" > security-report.md
+          echo "## Summary" >> security-report.md
+          echo "Analysis completed at: $(date)" >> security-report.md
+          echo "\`\`\`" >> security-report.md
+          cat results/*/summary.txt >> security-report.md
+          echo "\`\`\`" >> security-report.md
+
+      - name: Check for Critical Issues
+        id: check-critical
+        run: |
+          if grep -q "severity: critical" results/*/results.sarif; then
+            echo "::set-output name=has_critical::true"
+          else
+            echo "::set-output name=has_critical::false"
+          fi
+
+      - name: Create Issue for Critical Findings
+        if: steps.check-critical.outputs.has_critical == 'true'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('security-report.md', 'utf8');
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Critical Security Issues Found',
+              body: report,
+              labels: ['security', 'priority: critical']
+            });
+
+      - name: Notify Security Team
+        if: steps.check-critical.outputs.has_critical == 'true'
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          channel-id: 'security-alerts'
+          slack-message: |
+            🚨 Critical security issues found in ${{ github.repository }}
+            Branch: ${{ github.ref }}
+            Commit: ${{ github.sha }}
+            See details: ${{ github.server_url }}/${{ github.repository }}/security/code-scanning
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+  remediation:
+    name: Security Remediation
+    needs: report
+    runs-on: ubuntu-latest
+    if: failure()
+
+    steps:
+      - name: Create Remediation Issue
+        uses: actions/github-script@v6
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🔒 Security Remediation Required',
+              body: `
+                # Security Remediation Required
+
+                The CodeQL security scan has identified issues that need attention.
+
+                ## Action Items
+                1. Review the security scan results
+                2. Create fixes for identified vulnerabilities
+                3. Update dependencies if required
+                4. Add/update security tests
+                5. Document changes and update security policies
+
+                ## Links
+                - [CodeQL Results](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/security/code-scanning)
+                - [Security Policies](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/security/policy)
+                - [Security Overview](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/security)
+
+                Please prioritize addressing these security concerns.
+              `,
+              labels: ['security', 'needs-remediation']
+            });
+
+  cleanup:
+    name: Cleanup
+    needs: [analyze, report, remediation]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Remove Temporary Files
+        run: |
+          rm -rf results/
+          rm -f security-report.md
+
+      - name: Archive Logs
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: codeql-logs
+          path: |
+            ~/.codeql/logs
+            results/
+          retention-days: 7

@@ -1,0 +1,24 @@
+# Allow all web crawlers to index the site
+User-agent: *
+Allow: /
+
+# Disallow crawling of authentication routes
+Disallow: /login
+Disallow: /register
+Disallow: /reset-password
+
+# Disallow crawling of quiz access and admin routes
+Disallow: /quiz/access/*
+Disallow: /admin/*
+
+# Disallow crawling of API endpoints
+Disallow: /api/
+
+# Sitemap location (to be added when deployed)
+# Sitemap: https://your-domain.com/sitemap.xml
+
+# Crawl delay to prevent server overload
+Crawl-delay: 10
+
+# Cache directive
+Cache-Control: max-age=3600

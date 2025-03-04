@@ -1,0 +1,151 @@
+name: Feature Request
+description: Suggest an idea for Training Hub
+title: "[Feature]: "
+labels: ["enhancement", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to suggest a new feature! Please fill out this form to help us understand your proposal.
+
+  - type: checkboxes
+    attributes:
+      label: Prerequisites
+      description: Please check these boxes before submitting the feature request
+      options:
+        - label: I have checked that this feature has not already been requested
+          required: true
+        - label: I have considered the impact on existing functionality
+          required: true
+        - label: This feature would be valuable to other users
+          required: true
+
+  - type: dropdown
+    attributes:
+      label: Feature Category
+      description: What area of the application does this feature relate to?
+      options:
+        - Study Guides
+        - Quizzes
+        - User Management
+        - Administration
+        - Analytics
+        - User Interface
+        - Performance
+        - Security
+        - Integration
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Problem Statement
+      description: Is your feature request related to a problem? Please describe.
+      placeholder: A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you'd like
+      placeholder: A clear and concise description of what you want to happen
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Alternative Solutions
+      description: Describe alternatives you've considered
+      placeholder: A clear and concise description of any alternative solutions or features you've considered
+
+  - type: textarea
+    attributes:
+      label: User Story
+      description: Describe the feature from a user's perspective
+      placeholder: |
+        As a [type of user]
+        I want to [perform some action]
+        So that [achieve some goal/benefit]
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Acceptance Criteria
+      description: List the requirements for this feature to be considered complete
+      placeholder: |
+        - [ ] Requirement 1
+        - [ ] Requirement 2
+        - [ ] Requirement 3
+    validations:
+      required: true
+
+  - type: checkboxes
+    attributes:
+      label: Implementation Impact
+      description: What areas would be affected by this feature?
+      options:
+        - label: Requires database changes
+        - label: Requires API changes
+        - label: Affects existing features
+        - label: Requires documentation updates
+        - label: Requires user training
+        - label: Affects performance
+        - label: Requires deployment changes
+
+  - type: dropdown
+    attributes:
+      label: Priority
+      description: How important is this feature?
+      options:
+        - Critical (Blocking work)
+        - High (Important functionality)
+        - Medium (Useful enhancement)
+        - Low (Nice to have)
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Business Value
+      description: Describe the value this feature would bring
+      placeholder: How would this feature benefit users and the project?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Implementation Notes
+      description: Any technical details or considerations for implementing this feature
+      placeholder: Include any technical requirements, dependencies, or implementation suggestions
+
+  - type: textarea
+    attributes:
+      label: Mockups/Examples
+      description: Add any mockups, screenshots, or examples of similar features
+      placeholder: You can drag and drop images here
+
+  - type: textarea
+    attributes:
+      label: Additional Context
+      description: Add any other context about the feature request here
+      placeholder: Any other relevant information
+
+  - type: input
+    attributes:
+      label: Target Release
+      description: When would you like to see this feature implemented?
+      placeholder: "e.g., Q2 2025, v2.0.0"
+
+  - type: checkboxes
+    attributes:
+      label: Contribution
+      description: Would you be willing to contribute to this feature?
+      options:
+        - label: I would be willing to help implement this feature
+        - label: I would be willing to test this feature
+        - label: I would be willing to document this feature

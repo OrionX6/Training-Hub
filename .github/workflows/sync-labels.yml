@@ -1,0 +1,122 @@
+name: Sync Labels
+
+on:
+  push:
+    paths:
+      - '.github/labels.yml'
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  sync-labels:
+    name: Sync Repository Labels
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install Label Sync Dependencies
+        run: npm install -g github-label-sync
+
+      - name: Sync Labels
+        run: |
+          github-label-sync \
+            --access-token ${{ secrets.GITHUB_TOKEN }} \
+            --labels .github/labels.yml \
+            --allow-added-labels \
+            ${{ github.repository }}
+
+  validate-labels:
+    name: Validate Label Configuration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Validate YAML
+        run: |
+          npx yaml-validator .github/labels.yml
+
+      - name: Check Label Format
+        run: |
+          echo "Checking label format..."
+          cat .github/labels.yml | \
+          grep "^- name:" | \
+          while read -r line; do
+            label=$(echo "$line" | cut -d'"' -f2)
+            if ! echo "$label" | grep -qE "^[a-z-]+: [a-z-]+$"; then
+              echo "Invalid label format: $label"
+              echo "Labels should follow format: 'category: name' with lowercase letters and hyphens"
+              exit 1
+            fi
+          done
+
+      - name: Check Color Format
+        run: |
+          echo "Checking color format..."
+          cat .github/labels.yml | \
+          grep "^  color:" | \
+          while read -r line; do
+            color=$(echo "$line" | cut -d'"' -f2)
+            if ! echo "$color" | grep -qE "^[0-9a-f]{6}$"; then
+              echo "Invalid color format: $color"
+              echo "Colors should be 6-character hex codes without #"
+              exit 1
+            fi
+          done
+
+      - name: Check Descriptions
+        run: |
+          echo "Checking descriptions..."
+          cat .github/labels.yml | \
+          grep "^  description:" | \
+          while read -r line; do
+            desc=$(echo "$line" | cut -d'"' -f2)
+            if [ ${#desc} -lt 5 ] || [ ${#desc} -gt 100 ]; then
+              echo "Invalid description length: $desc"
+              echo "Descriptions should be between 5 and 100 characters"
+              exit 1
+            fi
+          done
+
+  report:
+    name: Report Label Status
+    needs: [sync-labels, validate-labels]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Report Success
+        if: ${{ needs.sync-labels.result == 'success' && needs.validate-labels.result == 'success' }}
+        run: |
+          echo "✅ Labels successfully synced and validated"
+          echo "Repository: ${{ github.repository }}"
+          echo "Configuration: .github/labels.yml"
+
+      - name: Report Failure
+        if: ${{ needs.sync-labels.result == 'failure' || needs.validate-labels.result == 'failure' }}
+        run: |
+          echo "❌ Label sync or validation failed"
+          echo "Please check the workflow logs for details"
+          exit 1
+
+      - name: Send Notification
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true

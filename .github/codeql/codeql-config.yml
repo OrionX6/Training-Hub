@@ -1,0 +1,175 @@
+# CodeQL Configuration for Training Hub
+
+name: "Training Hub CodeQL Config"
+
+disable-default-queries: false
+
+queries:
+  # Run all default queries for supported languages
+  - uses: security-and-quality
+  
+  # Run security-extended suite
+  - uses: security-extended
+  
+  # Custom query suites for specific languages
+  - uses: ./queries/typescript
+  - uses: ./queries/javascript
+  
+  # Additional external query packs
+  - name: codeql/typescript-security-library
+  - name: codeql/javascript-security-library
+
+# Customize paths to analyze
+paths:
+  - src
+  - scripts
+  - supabase
+paths-ignore:
+  - '**/node_modules/**'
+  - '**/dist/**'
+  - '**/build/**'
+  - '**/*.test.ts'
+  - '**/*.test.tsx'
+  - '**/*.spec.ts'
+  - '**/*.spec.tsx'
+  - '**/coverage/**'
+
+# Language configuration
+languages:
+  - name: javascript
+    groups:
+      - scope
+      - declarations
+      - dataflow
+  - name: typescript
+    groups:
+      - scope
+      - declarations
+      - dataflow
+
+# Query settings
+query-filters:
+  - exclude:
+      problem.severity:
+        - note
+        - recommendation
+  - include:
+      tags:
+        - security
+        - correctness
+
+# Analysis settings
+extraction:
+  javascript:
+    index:
+      include:
+        - "**/*.js"
+        - "**/*.jsx"
+        - "**/*.ts"
+        - "**/*.tsx"
+      exclude:
+        - "**/*.d.ts"
+  typescript:
+    index-typescript: true
+    typescript-version: "4.9.5"
+    index:
+      include:
+        - "**/*.ts"
+        - "**/*.tsx"
+      exclude:
+        - "**/*.d.ts"
+
+# Database settings
+database:
+  retain-all: false
+  max-disk: "1GB"
+
+# Threading settings
+threads: 0  # Use all available cores
+
+# Memory settings
+ram: "6GB"
+
+# Output settings
+output:
+  sarif: "results/codeql-results.sarif"
+  csv: "results/codeql-results.csv"
+  summary: "results/summary.txt"
+
+# Security severity thresholds
+security-severity:
+  critical: 9.0
+  high: 7.0
+  medium: 4.0
+  low: 0.1
+
+# Alert management
+alerts:
+  critical:
+    notify: true
+    block-pr: true
+  high:
+    notify: true
+    block-pr: true
+  medium:
+    notify: true
+    block-pr: false
+  low:
+    notify: true
+    block-pr: false
+
+# Custom security checks
+security-checks:
+  # Secret detection
+  secrets:
+    enabled: true
+    patterns:
+      - type: regex
+        pattern: '(?i)(api[_-]?key|token|secret|password|credential)["\']?\s*[:=]\s*["\'][^"\']+["\']'
+        message: "Potential hardcoded secret detected"
+
+  # SQL injection
+  sql-injection:
+    enabled: true
+    include-generated: false
+
+  # XSS prevention
+  xss:
+    enabled: true
+    sanitizers:
+      - dangerouslySetInnerHTML
+      - innerHTML
+
+  # Authentication checks
+  auth:
+    enabled: true
+    required-paths:
+      - "src/components/admin/**"
+      - "src/services/admin/**"
+
+# Custom analysis rules
+rules:
+  # TypeScript-specific rules
+  typescript:
+    no-any: warning
+    strict-null-checks: error
+    no-unsafe-assignment: error
+
+  # React-specific rules
+  react:
+    no-unsafe-lifecycle: error
+    hooks-exhaustive-deps: error
+    no-unsafe-html: error
+
+  # Security-specific rules
+  security:
+    no-eval: error
+    no-unsafe-regex: error
+    no-hardcoded-credentials: error
+    require-helmet: error
+
+# Reporting configuration
+reporting:
+  sarif-add-snippets: true
+  include-dependencies: true
+  suppress-similar: true

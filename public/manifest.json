@@ -1,0 +1,46 @@
+{
+  "short_name": "Training Hub",
+  "name": "Training Hub - Interactive Learning Platform",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#1c447f",
+  "background_color": "#f8f9fa",
+  "categories": ["education", "training", "productivity"],
+  "description": "Interactive training and quiz platform for professional development",
+  "dir": "ltr",
+  "lang": "en",
+  "orientation": "any",
+  "prefer_related_applications": false,
+  "scope": "/",
+  "shortcuts": [
+    {
+      "name": "Study Guides",
+      "url": "/study-guides",
+      "description": "Browse study materials"
+    },
+    {
+      "name": "Take Quiz",
+      "url": "/quiz/access",
+      "description": "Start a new quiz"
+    }
+  ]
+}

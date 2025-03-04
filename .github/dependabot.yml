@@ -1,0 +1,132 @@
+version: 2
+updates:
+  # NPM dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Chicago"
+    labels:
+      - "deps: update"
+      - "type: dependencies"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore(dev)"
+      include: "scope"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "project-maintainers"
+    assignees:
+      - "dependency-maintainers"
+    ignore:
+      # Ignore major version updates for these packages
+      - dependency-name: "@types/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+    versioning-strategy: increase
+    rebase-strategy: "auto"
+    target-branch: "develop"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Chicago"
+    labels:
+      - "deps: update"
+      - "type: ci"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "devops-team"
+    assignees:
+      - "ci-maintainers"
+
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Chicago"
+    labels:
+      - "deps: update"
+      - "type: docker"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "devops-team"
+    ignore:
+      # Ignore patch updates for base images
+      - dependency-name: "node"
+        update-types: ["version-update:semver-patch"]
+
+# Configuration for vulnerability alerts
+vulnerability-alerts:
+  # Labels to add to pull requests for security updates
+  labels:
+    - "deps: security"
+    - "priority: high"
+    - "type: security"
+
+# Settings for automated dependency reviews
+dependency-review:
+  # Enable automated dependency reviews for PRs
+  enabled: true
+  # Reject PRs with vulnerable dependencies
+  reject-vulnerable: true
+  # Only allow dependencies from trusted registries
+  trusted-registries:
+    - "registry.npmjs.org"
+    - "ghcr.io"
+    - "docker.io"
+
+# Settings for automatic dependency grouping
+groups:
+  # Group all TypeScript-related updates
+  typescript-updates:
+    patterns:
+      - "typescript"
+      - "@types/*"
+      - "ts-*"
+    exclude-patterns:
+      - "ts-node"
+
+  # Group all testing-related updates
+  test-updates:
+    patterns:
+      - "jest*"
+      - "@testing-library/*"
+      - "@types/jest"
+
+  # Group all React-related updates
+  react-updates:
+    patterns:
+      - "react"
+      - "react-dom"
+      - "@types/react*"
+      - "react-*"
+
+  # Group all ESLint-related updates
+  eslint-updates:
+    patterns:
+      - "eslint*"
+      - "@typescript-eslint/*"
+
+  # Group all Prettier-related updates
+  prettier-updates:
+    patterns:
+      - "prettier*"
+      - "eslint-config-prettier"
+      - "eslint-plugin-prettier"

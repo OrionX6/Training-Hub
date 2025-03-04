@@ -1,0 +1,178 @@
+# Issue and PR Labels Configuration
+
+# Priority Labels
+- name: "priority: critical"
+  color: "b60205"
+  description: "Must be fixed/implemented ASAP"
+
+- name: "priority: high"
+  color: "d93f0b"
+  description: "Needs attention soon"
+
+- name: "priority: medium"
+  color: "fbca04"
+  description: "Should be addressed in current sprint"
+
+- name: "priority: low"
+  color: "0e8a16"
+  description: "Nice to have"
+
+# Type Labels
+- name: "type: bug"
+  color: "ee0701"
+  description: "Something isn't working"
+
+- name: "type: feature"
+  color: "0052cc"
+  description: "New feature request"
+
+- name: "type: enhancement"
+  color: "1d76db"
+  description: "Improvement to existing features"
+
+- name: "type: documentation"
+  color: "0075ca"
+  description: "Documentation changes"
+
+- name: "type: question"
+  color: "d876e3"
+  description: "Further information needed"
+
+# Status Labels
+- name: "status: needs-triage"
+  color: "fbca04"
+  description: "Needs initial review"
+
+- name: "status: confirmed"
+  color: "0e8a16"
+  description: "Issue confirmed and ready to work on"
+
+- name: "status: in-progress"
+  color: "cccccc"
+  description: "Work in progress"
+
+- name: "status: blocked"
+  color: "b60205"
+  description: "Blocked by other work"
+
+- name: "status: needs-review"
+  color: "5319e7"
+  description: "Ready for review"
+
+- name: "status: duplicate"
+  color: "cfd3d7"
+  description: "This issue/PR already exists"
+
+- name: "status: wontfix"
+  color: "ffffff"
+  description: "This will not be worked on"
+
+# Component Labels
+- name: "component: frontend"
+  color: "c5def5"
+  description: "Frontend-related changes"
+
+- name: "component: backend"
+  color: "bfd4f2"
+  description: "Backend-related changes"
+
+- name: "component: database"
+  color: "bfdadc"
+  description: "Database-related changes"
+
+- name: "component: auth"
+  color: "d4c5f9"
+  description: "Authentication-related changes"
+
+- name: "component: quiz"
+  color: "c2e0c6"
+  description: "Quiz functionality changes"
+
+- name: "component: study-guide"
+  color: "c2e0c6"
+  description: "Study guide functionality changes"
+
+# Size Labels
+- name: "size: XS"
+  color: "009900"
+  description: "Extra small changes (<10 lines)"
+
+- name: "size: S"
+  color: "77bb00"
+  description: "Small changes (10-50 lines)"
+
+- name: "size: M"
+  color: "eebb00"
+  description: "Medium changes (50-250 lines)"
+
+- name: "size: L"
+  color: "ee9900"
+  description: "Large changes (250-1000 lines)"
+
+- name: "size: XL"
+  color: "ee5500"
+  description: "Extra large changes (>1000 lines)"
+
+# Technical Labels
+- name: "tech: testing"
+  color: "fef2c0"
+  description: "Testing-related changes"
+
+- name: "tech: performance"
+  color: "ffb8c6"
+  description: "Performance-related changes"
+
+- name: "tech: security"
+  color: "d93f0b"
+  description: "Security-related changes"
+
+- name: "tech: docker"
+  color: "1d76db"
+  description: "Docker-related changes"
+
+- name: "tech: ci/cd"
+  color: "5319e7"
+  description: "CI/CD pipeline changes"
+
+# Process Labels
+- name: "process: needs-tests"
+  color: "fbca04"
+  description: "Needs test coverage"
+
+- name: "process: needs-docs"
+  color: "fbca04"
+  description: "Needs documentation"
+
+- name: "process: breaking-change"
+  color: "b60205"
+  description: "Includes breaking changes"
+
+- name: "process: good-first-issue"
+  color: "7057ff"
+  description: "Good for newcomers"
+
+- name: "process: help-wanted"
+  color: "008672"
+  description: "Extra attention needed"
+
+# Dependencies Labels
+- name: "deps: update"
+  color: "0366d6"
+  description: "Dependency updates"
+
+- name: "deps: security"
+  color: "d93f0b"
+  description: "Security-related dependency updates"
+
+# Special Labels
+- name: "do-not-merge"
+  color: "b60205"
+  description: "This PR should not be merged yet"
+
+- name: "work-in-progress"
+  color: "fbca04"
+  description: "This is a work in progress"
+
+- name: "needs-discussion"
+  color: "d876e3"
+  description: "Needs team discussion"

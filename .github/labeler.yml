@@ -1,0 +1,109 @@
+# File patterns to automatically label pull requests
+
+# Component labels
+'component: admin':
+  - src/components/admin/**/*
+  - src/services/admin.service.ts
+
+'component: quiz':
+  - src/components/quiz/**/*
+  - src/services/quiz.service.ts
+
+'component: study-guide':
+  - src/components/study-guide/**/*
+  - src/services/study-guide.service.ts
+
+'component: shared':
+  - src/components/shared/**/*
+
+# Type labels
+'type: feature':
+  - 'src/components/**/*.tsx'
+  - 'src/services/**/*.ts'
+  - 'src/context/**/*.tsx'
+
+'type: test':
+  - '**/*.test.ts'
+  - '**/*.test.tsx'
+  - '**/*.spec.ts'
+  - '**/*.spec.tsx'
+  - 'src/__tests__/**/*'
+
+'type: docs':
+  - '**/*.md'
+  - 'docs/**/*'
+
+'type: config':
+  - '*.json'
+  - '*.js'
+  - '*.yml'
+  - '.github/**/*'
+  - 'scripts/**/*'
+
+'type: database':
+  - 'supabase/**/*'
+
+'type: style':
+  - '**/*.css'
+  - '**/*.scss'
+  - 'src/styles/**/*'
+
+# Size labels are handled by pr-size-labeler action
+
+# Priority labels based on files
+'priority: high':
+  - 'src/context/AuthContext.tsx'
+  - 'src/services/admin.service.ts'
+  - 'supabase/migrations/*'
+
+'priority: security':
+  - 'src/services/**/*.ts'
+  - 'src/context/AuthContext.tsx'
+  - '.env.example'
+
+# Status labels
+'status: needs-tests':
+  - any: ['src/**/*']
+    all: ['!**/*.test.ts', '!**/*.test.tsx', '!**/*.spec.ts', '!**/*.spec.tsx']
+
+'status: needs-docs':
+  - any: ['src/**/*']
+    all: ['!**/*.md']
+
+# Branch-based labels (used with pr-labeler-action)
+'branch: feature':
+  - 'feature/*'
+  - 'feat/*'
+
+'branch: bugfix':
+  - 'fix/*'
+  - 'bugfix/*'
+
+'branch: hotfix':
+  - 'hotfix/*'
+
+'branch: release':
+  - 'release/*'
+
+'branch: dependabot':
+  - 'dependabot/**'
+
+# Additional file type labels
+'ts':
+  - '**/*.ts'
+  - '**/*.tsx'
+
+'js':
+  - '**/*.js'
+  - '**/*.jsx'
+
+'ci':
+  - '.github/workflows/*'
+  - 'scripts/deploy.sh'
+  - 'docker-compose.yml'
+  - 'Dockerfile'
+
+'dependencies':
+  - 'package.json'
+  - 'package-lock.json'
+  - 'yarn.lock'

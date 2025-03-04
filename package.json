@@ -1,0 +1,98 @@
+{
+  "name": "training-hub",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "node scripts/run.js build",
+    "test": "react-scripts test",
+    "test:coverage": "react-scripts test --coverage --watchAll=false",
+    "eject": "react-scripts eject",
+    "lint": "eslint src/**/*.{ts,tsx}",
+    "lint:fix": "eslint src/**/*.{ts,tsx} --fix",
+    "format": "prettier --write src/**/*.{ts,tsx,css}",
+    "dev": "node scripts/run.js dev",
+    "clean": "node scripts/run.js clean",
+    "setup": "node scripts/run.js setup",
+    "make-executable": "chmod +x scripts/make-executable.sh && ./scripts/make-executable.sh",
+    "prepare": "npm run make-executable",
+    "predev": "npm run prepare && npm run validate",
+    "prebuild": "npm run prepare && npm run validate",
+    "docker:dev": "node scripts/docker-dev.js up",
+    "docker:down": "node scripts/docker-dev.js down",
+    "docker:rebuild": "node scripts/docker-dev.js rebuild",
+    "docker:clean": "node scripts/docker-dev.js clean",
+    "docker:test": "node scripts/docker-dev.js test",
+    "docker:lint": "node scripts/docker-dev.js lint",
+    "docker:logs": "node scripts/docker-dev.js logs",
+    "docker:shell": "node scripts/docker-dev.js shell",
+    "validate": "chmod +x scripts/validate-env.sh && ./scripts/validate-env.sh",
+    "postinstall": "npm run validate",
+    "pretest": "npm run validate",
+    "deploy": "chmod +x scripts/deploy.sh && ./scripts/deploy.sh",
+    "deploy:dev": "npm run deploy development",
+    "deploy:staging": "npm run deploy staging",
+    "deploy:prod": "npm run deploy production",
+    "predeploy:prod": "npm run test:coverage && npm run validate",
+    "danger": "danger ci"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.0",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.16.0",
+    "react-scripts": "5.0.1",
+    "react-toastify": "^9.1.3",
+    "styled-components": "^6.0.8",
+    "web-vitals": "^2.1.4"
+  },
+  "devDependencies": {
+    "@types/jest": "^27.5.2",
+    "@types/node": "^16.18.58",
+    "@types/react": "^18.2.25",
+    "@types/react-dom": "^18.2.11",
+    "@types/react-router-dom": "^5.3.3",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
+    "ajv": "^8.17.1",
+    "ajv-keywords": "^5.1.0",
+    "danger": "^11.3.0",
+    "eslint": "^8.51.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "identity-obj-proxy": "^3.0.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "jest-watch-typeahead": "^2.2.2",
+    "prettier": "^3.0.3",
+    "ts-jest": "^29.1.1",
+    "typescript": "^4.9.5"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "resolutions": {
+    "@types/react": "^18.2.25",
+    "@types/react-dom": "^18.2.11"
+  }
+}
