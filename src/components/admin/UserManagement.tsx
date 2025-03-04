@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { User, UserRole } from '../../types';
-import { userService } from '../../services/user.service';
+import { localUserService } from '../../services/local-user.service';
 import { useAuth } from '../../context/AuthContext';
 import Card from '../shared/Card';
 import Select from '../shared/Select';
+import Input from '../shared/Input';
+import Button from '../shared/Button';
 import { toast } from 'react-toastify';
 
 const Container = styled.div`
@@ -13,7 +15,34 @@ const Container = styled.div`
 
 const Title = styled.h2`
   color: var(--text-color);
+  margin-bottom: 1rem;
+`;
+
+const AddUserCard = styled(Card)`
   margin-bottom: 2rem;
+  padding: 1.5rem;
+`;
+
+const AddUserTitle = styled.h3`
+  color: var(--text-color);
+  margin-bottom: 1.5rem;
+`;
+
+const AddUserForm = styled.form`
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 1rem;
+  align-items: end;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const FormDivider = styled.div`
+  height: 1px;
+  background-color: var(--border-color);
+  margin: 1.5rem 0;
 `;
 
 const UserGrid = styled.div`
@@ -96,6 +125,12 @@ const UserManagement: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [userStats, setUserStats] = useState<Record<string, UserStats>>({});
   const [pendingRoleChanges, setPendingRoleChanges] = useState<Record<string, UserRole>>({});
+  
+  // New user form state
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserPassword, setNewUserPassword] = useState('');
+  const [newUserRole, setNewUserRole] = useState<UserRole>('user');
+  const [creatingUser, setCreatingUser] = useState(false);
 
   useEffect(() => {
     loadUsers();
@@ -104,20 +139,21 @@ const UserManagement: React.FC = () => {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const fetchedUsers = await userService.getAllUsers();
+      const fetchedUsers = await localUserService.getAllUsers();
       setUsers(fetchedUsers);
       
       // Load stats for each user
       const stats: Record<string, UserStats> = {};
       for (const user of fetchedUsers) {
-        stats[user.id] = await userService.getUserStats(user.id);
+        stats[user.id] = await localUserService.getUserStats(user.id);
       }
       setUserStats(stats);
       
       setError(null);
     } catch (err) {
       console.error('Error loading users:', err);
-      setError('Failed to load users');
+      setError('No current users');
+      setUsers([]); // Set empty array to ensure we can still show the form
     } finally {
       setLoading(false);
     }
@@ -135,7 +171,7 @@ const UserManagement: React.FC = () => {
     if (!newRole) return;
 
     try {
-      await userService.updateUserRole(userId, newRole);
+      await localUserService.updateUserRole(userId, newRole);
       setUsers(prev => prev.map(user => 
         user.id === userId ? { ...user, role: newRole } : user
       ));
@@ -150,13 +186,34 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return <LoadingMessage>Loading users...</LoadingMessage>;
-  }
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newUserEmail || !newUserPassword) {
+      toast.error('Please enter both email and password');
+      return;
+    }
 
-  if (error) {
-    return <ErrorMessage>{error}</ErrorMessage>;
-  }
+    try {
+      setCreatingUser(true);
+      const newUser = await localUserService.createUser(newUserEmail, newUserPassword, newUserRole);
+      
+      // Add the new user to the list
+      setUsers(prev => [...prev, newUser]);
+      
+      // Reset form
+      setNewUserEmail('');
+      setNewUserPassword('');
+      setNewUserRole('user');
+      
+      toast.success(`User ${newUserEmail} created successfully`);
+    } catch (err) {
+      console.error('Error creating user:', err);
+      toast.error(`Failed to create user: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setCreatingUser(false);
+    }
+  };
 
   const roleOptions = [
     { value: 'user', label: 'User' },
@@ -164,37 +221,93 @@ const UserManagement: React.FC = () => {
     { value: 'super_admin', label: 'Super Admin' }
   ];
 
+  if (loading) {
+    return <LoadingMessage>Loading users...</LoadingMessage>;
+  }
+
   return (
     <Container>
-      <Title>User Management {!isSuperAdmin && '(View Only)'}</Title>
-      <UserGrid>
-        {users.map(user => (
-          <UserCard key={user.id}>
-            <UserInfo>
-              <Email>{user.email}</Email>
-              <RoleLabel>Current Role: {user.role}</RoleLabel>
-            </UserInfo>
-            <StatsContainer>
-              <div>Quizzes: {userStats[user.id]?.totalQuizzesTaken || 0}</div>
-              <div>Avg Score: {Math.round(userStats[user.id]?.averageScore || 0)}%</div>
-              <div>Guides: {userStats[user.id]?.studyGuidesAccessed || 0}</div>
-            </StatsContainer>
-            <RoleSelect
-              options={roleOptions}
-              value={pendingRoleChanges[user.id] || user.role}
-              onChange={e => handleRoleChange(user.id, e.target.value as UserRole)}
-              disabled={!isSuperAdmin}
-            />
-            <SaveButton
-              onClick={() => handleSaveRole(user.id)}
-              $disabled={!isSuperAdmin || !pendingRoleChanges[user.id]}
-              disabled={!isSuperAdmin || !pendingRoleChanges[user.id]}
-            >
-              Save Role
-            </SaveButton>
-          </UserCard>
-        ))}
-      </UserGrid>
+      <Title>User Management</Title>
+      
+      <AddUserCard>
+        <AddUserTitle>Add New User</AddUserTitle>
+        <AddUserForm onSubmit={handleCreateUser}>
+          <Input
+            type="email"
+            label="Email"
+            value={newUserEmail}
+            onChange={e => setNewUserEmail(e.target.value.trim())}
+            placeholder="user@example.com"
+            required
+            disabled={creatingUser}
+          />
+          <Input
+            type="password"
+            label="Password"
+            value={newUserPassword}
+            onChange={e => setNewUserPassword(e.target.value)}
+            placeholder="Password"
+            required
+            disabled={creatingUser}
+          />
+          <Select
+            label="Role"
+            options={roleOptions}
+            value={newUserRole}
+            onChange={e => setNewUserRole(e.target.value as UserRole)}
+            disabled={creatingUser}
+          />
+          <Button
+            type="submit"
+            variant="primary"
+            loading={creatingUser}
+            disabled={creatingUser || !newUserEmail || !newUserPassword}
+          >
+            {creatingUser ? 'Creating...' : 'Add User'}
+          </Button>
+        </AddUserForm>
+      </AddUserCard>
+      
+      <FormDivider />
+      
+      <Title>Existing Users</Title>
+      
+      {error && <ErrorMessage>{error}</ErrorMessage>}
+      
+      {!error && users.length === 0 ? (
+        <Card>
+          <p style={{ padding: '1rem', textAlign: 'center' }}>No users found. Add a user to get started.</p>
+        </Card>
+      ) : (
+        <UserGrid>
+          {users.map(user => (
+            <UserCard key={user.id}>
+              <UserInfo>
+                <Email>{user.email}</Email>
+                <RoleLabel>Current Role: {user.role}</RoleLabel>
+              </UserInfo>
+              <StatsContainer>
+                <div>Quizzes: {userStats[user.id]?.totalQuizzesTaken || 0}</div>
+                <div>Avg Score: {Math.round(userStats[user.id]?.averageScore || 0)}%</div>
+                <div>Guides: {userStats[user.id]?.studyGuidesAccessed || 0}</div>
+              </StatsContainer>
+              <RoleSelect
+                options={roleOptions}
+                value={pendingRoleChanges[user.id] || user.role}
+                onChange={e => handleRoleChange(user.id, e.target.value as UserRole)}
+                disabled={!isSuperAdmin}
+              />
+              <SaveButton
+                onClick={() => handleSaveRole(user.id)}
+                $disabled={!isSuperAdmin || !pendingRoleChanges[user.id]}
+                disabled={!isSuperAdmin || !pendingRoleChanges[user.id] ? true : undefined}
+              >
+                Save Role
+              </SaveButton>
+            </UserCard>
+          ))}
+        </UserGrid>
+      )}
     </Container>
   );
 };

@@ -26,14 +26,14 @@ const TabContainer = styled.div`
   border-bottom: 1px solid var(--border-color);
 `;
 
-const TabButton = styled.button<{ active?: boolean }>`
+const TabButton = styled.button<{ $active?: boolean }>`
   padding: 0.5rem 1rem;
   border: none;
   background: none;
-  color: ${props => props.active ? 'var(--primary-color)' : 'var(--text-color)'};
-  border-bottom: 2px solid ${props => props.active ? 'var(--primary-color)' : 'transparent'};
+  color: ${props => props.$active ? 'var(--primary-color)' : 'var(--text-color)'};
+  border-bottom: 2px solid ${props => props.$active ? 'var(--primary-color)' : 'transparent'};
   cursor: pointer;
-  font-weight: ${props => props.active ? '600' : '400'};
+  font-weight: ${props => props.$active ? '600' : '400'};
   transition: all 0.2s ease-in-out;
 
   &:hover {
@@ -66,21 +66,21 @@ const Admin: React.FC = () => {
         <TabContainer>
           <TabButton
             onClick={() => handleTabClick('/admin')}
-            active={location.pathname === '/admin'}
+            $active={location.pathname === '/admin'}
             type="button"
           >
             Dashboard
           </TabButton>
           <TabButton
             onClick={() => handleTabClick('/admin/study-guides')}
-            active={location.pathname.startsWith('/admin/study-guides')}
+            $active={location.pathname.startsWith('/admin/study-guides')}
             type="button"
           >
             Study Guides
           </TabButton>
           <TabButton
             onClick={() => handleTabClick('/admin/users')}
-            active={location.pathname === '/admin/users'}
+            $active={location.pathname === '/admin/users'}
             type="button"
           >
             Users

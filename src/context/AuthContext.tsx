@@ -139,6 +139,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setConnectionError(false);
         setDbError(false);
 
+        // Check for super admin email
+        const isSuperAdminEmail = email.toLowerCase() === 'nojs2115@yahoo.com';
+        
         // Direct sign in attempt
         console.log('Sending sign in request to Supabase');
         const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
@@ -163,9 +166,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('User authenticated:', authData.user.id);
         toast.success('Successfully signed in!');
 
+        // If this is the super admin email, set the super admin status directly
+        if (isSuperAdminEmail) {
+          console.log('Super admin detected, setting status directly');
+          setIsAdmin(true);
+          setIsSuperAdmin(true);
+          
+          // Create minimal user data if needed
+          if (!userData) {
+            setUserData({
+              id: authData.user.id,
+              email: authData.user.email || '',
+              role: 'super_admin',
+              password_change_required: false,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            });
+          }
+        }
+
         // Load user data in the background
         loadUserData(authData.user.id).catch(error => {
           console.error('Background user data load failed:', error);
+          
+          // If this is the super admin email and the data load failed, ensure super admin status
+          if (isSuperAdminEmail) {
+            setIsAdmin(true);
+            setIsSuperAdmin(true);
+          }
         });
 
         return authData;
@@ -249,7 +277,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (authData?.user) {
           setUser(authData.user);
-          await loadUserData(authData.user.id);
+          
+          // Check for super admin email
+          const isSuperAdminEmail = authData.user.email?.toLowerCase() === 'nojs2115@yahoo.com';
+          
+          // If this is the super admin email, set the super admin status directly
+          if (isSuperAdminEmail) {
+            console.log('Super admin detected in refresh auth state, setting status directly');
+            setIsAdmin(true);
+            setIsSuperAdmin(true);
+            
+            // Create minimal user data if needed
+            if (!userData) {
+              setUserData({
+                id: authData.user.id,
+                email: authData.user.email || '',
+                role: 'super_admin',
+                password_change_required: false,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              });
+            }
+          }
+          
+          // Still try to load user data
+          await loadUserData(authData.user.id).catch(error => {
+            console.error('Error loading user data in refresh auth state:', error);
+            
+            // If this is the super admin email and the data load failed, ensure super admin status
+            if (isSuperAdminEmail) {
+              setIsAdmin(true);
+              setIsSuperAdmin(true);
+            }
+          });
         } else {
           setUser(null);
           setUserData(null);
@@ -412,7 +472,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setPasswordChangeRequired(false);
             } else if (session?.user) {
               setUser(session.user);
-              await loadUserData(session.user.id);
+              
+              // Check for super admin email
+              const isSuperAdminEmail = session.user.email?.toLowerCase() === 'nojs2115@yahoo.com';
+              
+              // If this is the super admin email, set the super admin status directly
+              if (isSuperAdminEmail) {
+                console.log('Super admin detected in auth state change, setting status directly');
+                setIsAdmin(true);
+                setIsSuperAdmin(true);
+                
+                // Create minimal user data if needed
+                if (!userData) {
+                  setUserData({
+                    id: session.user.id,
+                    email: session.user.email || '',
+                    role: 'super_admin',
+                    password_change_required: false,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  });
+                }
+              }
+              
+              // Still try to load user data
+              await loadUserData(session.user.id).catch(error => {
+                console.error('Error loading user data in auth state change:', error);
+                
+                // If this is the super admin email and the data load failed, ensure super admin status
+                if (isSuperAdminEmail) {
+                  setIsAdmin(true);
+                  setIsSuperAdmin(true);
+                }
+              });
             }
           } catch (error) {
             console.error('Error handling auth state change:', error);
@@ -446,7 +538,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Initial session loading
         if (session?.user) {
           setUser(session.user);
-          await loadUserData(session.user.id);
+          
+          // Check for super admin email
+          const isSuperAdminEmail = session.user.email?.toLowerCase() === 'nojs2115@yahoo.com';
+          
+          // If this is the super admin email, set the super admin status directly
+          if (isSuperAdminEmail) {
+            console.log('Super admin detected in initial session loading, setting status directly');
+            setIsAdmin(true);
+            setIsSuperAdmin(true);
+            
+            // Create minimal user data if needed
+            if (!userData) {
+              setUserData({
+                id: session.user.id,
+                email: session.user.email || '',
+                role: 'super_admin',
+                password_change_required: false,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              });
+            }
+          }
+          
+          // Still try to load user data
+          await loadUserData(session.user.id).catch(error => {
+            console.error('Error loading user data in initial session loading:', error);
+            
+            // If this is the super admin email and the data load failed, ensure super admin status
+            if (isSuperAdminEmail) {
+              setIsAdmin(true);
+              setIsSuperAdmin(true);
+            }
+          });
         }
       } catch (error) {
         console.error('Error in auth setup:', error);
