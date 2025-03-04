@@ -1,51 +1,101 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { User, UserRole } from '../../types';
-import { adminService } from '../../services/admin.service';
-import { toast } from 'react-toastify';
+import { userService } from '../../services/user.service';
+import { useAuth } from '../../context/AuthContext';
 import Card from '../shared/Card';
 import Select from '../shared/Select';
-import Button from '../shared/Button';
-import ConfirmDialog from '../shared/ConfirmDialog';
+import { toast } from 'react-toastify';
 
-const Table = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 1rem;
+const Container = styled.div`
+  padding: 2rem;
 `;
 
-const Th = styled.th`
-  text-align: left;
-  padding: 0.75rem;
-  border-bottom: 2px solid var(--border-color);
+const Title = styled.h2`
+  color: var(--text-color);
+  margin-bottom: 2rem;
+`;
+
+const UserGrid = styled.div`
+  display: grid;
+  gap: 1rem;
+`;
+
+const UserCard = styled(Card)`
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+`;
+
+const UserInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const Email = styled.span`
+  color: var(--text-color);
+  font-weight: 500;
+`;
+
+const RoleLabel = styled.span`
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+`;
+
+const StatsContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.875rem;
   color: var(--text-secondary);
 `;
 
-const Td = styled.td`
-  padding: 0.75rem;
-  border-bottom: 1px solid var(--border-color);
-`;
-
 const RoleSelect = styled(Select)`
-  min-width: 150px;
+  width: 150px;
 `;
 
-const ActionButton = styled(Button)`
-  margin-left: 0.5rem;
+const SaveButton = styled.button<{ $disabled: boolean }>`
+  padding: 0.5rem 1rem;
+  background-color: ${props => (props.$disabled ? '#ccc' : 'var(--primary-color)')};
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: ${props => (props.$disabled ? 'not-allowed' : 'pointer')};
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: ${props => (props.$disabled ? '#ccc' : 'var(--primary-dark)')};
+  }
 `;
 
-const roleOptions = [
-  { value: 'user', label: 'User' },
-  { value: 'admin', label: 'Admin' },
-  { value: 'super_admin', label: 'Super Admin' },
-];
+const LoadingMessage = styled.div`
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-color);
+`;
+
+const ErrorMessage = styled.div`
+  color: var(--error-color);
+  text-align: center;
+  margin: 2rem 0;
+`;
+
+interface UserStats {
+  totalQuizzesTaken: number;
+  averageScore: number;
+  studyGuidesAccessed: number;
+}
 
 const UserManagement: React.FC = () => {
+  const { isSuperAdmin } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showResetDialog, setShowResetDialog] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [userStats, setUserStats] = useState<Record<string, UserStats>>({});
+  const [pendingRoleChanges, setPendingRoleChanges] = useState<Record<string, UserRole>>({});
 
   useEffect(() => {
     loadUsers();
@@ -54,8 +104,16 @@ const UserManagement: React.FC = () => {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const users = await adminService.getUsers();
-      setUsers(users);
+      const fetchedUsers = await userService.getAllUsers();
+      setUsers(fetchedUsers);
+      
+      // Load stats for each user
+      const stats: Record<string, UserStats> = {};
+      for (const user of fetchedUsers) {
+        stats[user.id] = await userService.getUserStats(user.id);
+      }
+      setUserStats(stats);
+      
       setError(null);
     } catch (err) {
       console.error('Error loading users:', err);
@@ -65,10 +123,26 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const handleRoleChange = async (user: User, newRole: UserRole) => {
+  const handleRoleChange = (userId: string, newRole: UserRole) => {
+    setPendingRoleChanges(prev => ({
+      ...prev,
+      [userId]: newRole
+    }));
+  };
+
+  const handleSaveRole = async (userId: string) => {
+    const newRole = pendingRoleChanges[userId];
+    if (!newRole) return;
+
     try {
-      await adminService.updateUserRole(user.id, newRole);
-      setUsers(users.map(u => (u.id === user.id ? { ...u, role: newRole } : u)));
+      await userService.updateUserRole(userId, newRole);
+      setUsers(prev => prev.map(user => 
+        user.id === userId ? { ...user, role: newRole } : user
+      ));
+      setPendingRoleChanges(prev => {
+        const { [userId]: _, ...rest } = prev;
+        return rest;
+      });
       toast.success('User role updated successfully');
     } catch (err) {
       console.error('Error updating user role:', err);
@@ -76,89 +150,52 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const handleResetPassword = async () => {
-    if (!selectedUserId) return;
-
-    try {
-      const tempPassword = await adminService.resetUserPassword(selectedUserId);
-      toast.success(`Password reset successful. Temporary password: ${tempPassword}`, {
-        autoClose: false,
-      });
-    } catch (err) {
-      console.error('Error resetting password:', err);
-      toast.error('Failed to reset password');
-    } finally {
-      setShowResetDialog(false);
-      setSelectedUserId(null);
-    }
-  };
-
   if (loading) {
-    return <Card>Loading users...</Card>;
+    return <LoadingMessage>Loading users...</LoadingMessage>;
   }
 
   if (error) {
-    return (
-      <Card>
-        <div style={{ color: 'var(--error-color)', textAlign: 'center' }}>{error}</div>
-        <Button variant="primary" onClick={loadUsers}>
-          Retry
-        </Button>
-      </Card>
-    );
+    return <ErrorMessage>{error}</ErrorMessage>;
   }
 
-  return (
-    <Card>
-      <h2>User Management</h2>
-      <Table>
-        <thead>
-          <tr>
-            <Th>Email</Th>
-            <Th>LDAP</Th>
-            <Th>Role</Th>
-            <Th>Actions</Th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map(user => (
-            <tr key={user.id}>
-              <Td>{user.email}</Td>
-              <Td>{user.ldap || '-'}</Td>
-              <Td>
-                <RoleSelect
-                  value={user.role}
-                  onChange={e => handleRoleChange(user, e.target.value as UserRole)}
-                  options={roleOptions}
-                />
-              </Td>
-              <Td>
-                <ActionButton
-                  variant="secondary"
-                  onClick={() => {
-                    setSelectedUserId(user.id);
-                    setShowResetDialog(true);
-                  }}
-                >
-                  Reset Password
-                </ActionButton>
-              </Td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
+  const roleOptions = [
+    { value: 'user', label: 'User' },
+    { value: 'admin', label: 'Admin' },
+    { value: 'super_admin', label: 'Super Admin' }
+  ];
 
-      <ConfirmDialog
-        title="Reset Password"
-        message="Are you sure you want to reset this user's password? They will be required to change it on next login."
-        onConfirm={handleResetPassword}
-        onClose={() => {
-          setShowResetDialog(false);
-          setSelectedUserId(null);
-        }}
-        isOpen={showResetDialog}
-      />
-    </Card>
+  return (
+    <Container>
+      <Title>User Management {!isSuperAdmin && '(View Only)'}</Title>
+      <UserGrid>
+        {users.map(user => (
+          <UserCard key={user.id}>
+            <UserInfo>
+              <Email>{user.email}</Email>
+              <RoleLabel>Current Role: {user.role}</RoleLabel>
+            </UserInfo>
+            <StatsContainer>
+              <div>Quizzes: {userStats[user.id]?.totalQuizzesTaken || 0}</div>
+              <div>Avg Score: {Math.round(userStats[user.id]?.averageScore || 0)}%</div>
+              <div>Guides: {userStats[user.id]?.studyGuidesAccessed || 0}</div>
+            </StatsContainer>
+            <RoleSelect
+              options={roleOptions}
+              value={pendingRoleChanges[user.id] || user.role}
+              onChange={e => handleRoleChange(user.id, e.target.value as UserRole)}
+              disabled={!isSuperAdmin}
+            />
+            <SaveButton
+              onClick={() => handleSaveRole(user.id)}
+              $disabled={!isSuperAdmin || !pendingRoleChanges[user.id]}
+              disabled={!isSuperAdmin || !pendingRoleChanges[user.id]}
+            >
+              Save Role
+            </SaveButton>
+          </UserCard>
+        ))}
+      </UserGrid>
+    </Container>
   );
 };
 

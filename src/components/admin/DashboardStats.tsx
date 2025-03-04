@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import styled from 'styled-components';
 import { adminService } from '../../services/admin.service';
 import { QuizResultFilters } from '../../types';
@@ -6,6 +6,7 @@ import Card from '../shared/Card';
 
 interface DashboardStatsProps {
   filters?: QuizResultFilters;
+  onError?: (error: string | null) => void;
 }
 
 interface Stats {
@@ -64,28 +65,60 @@ const ErrorState = styled.div`
   color: var(--error-color);
 `;
 
-const DashboardStats: React.FC<DashboardStatsProps> = ({ filters = {} }) => {
+const DashboardStatsComponent: React.FC<DashboardStatsProps> = ({ filters = {}, onError }) => {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadStats = async () => {
+  const loadStats = useCallback(
+    async (signal: AbortSignal) => {
+      if (signal.aborted) return;
+
       try {
         setLoading(true);
-        const data = await adminService.getDashboardStats(filters);
-        setStats(data);
-        setError(null);
-      } catch (err) {
-        console.error('Error loading dashboard stats:', err);
-        setError('Failed to load dashboard statistics');
-      } finally {
-        setLoading(false);
-      }
-    };
+        const legacyFilters = filters as { ldap?: string } & QuizResultFilters;
+        const updatedFilters = {
+          ...filters,
+          username: legacyFilters.ldap || filters.username,
+        };
 
-    loadStats();
-  }, [filters]);
+        console.log('Fetching dashboard stats');
+        const data = await adminService.getDashboardStats(updatedFilters);
+
+        if (!signal.aborted) {
+          console.log('Dashboard stats fetched successfully');
+          setStats(data);
+          setError(null);
+        }
+      } catch (err) {
+        if (!signal.aborted) {
+          const errorMessage =
+            err instanceof Error ? err.message : 'Failed to load dashboard statistics';
+          console.error('Error loading dashboard stats:', err);
+          setError(errorMessage);
+          if (onError) {
+            onError(errorMessage);
+          }
+        }
+      } finally {
+        if (!signal.aborted) {
+          setLoading(false);
+        }
+      }
+    },
+    [filters],
+  );
+
+  useEffect(() => {
+    const abortController = new AbortController();
+
+    // Load stats when component mounts
+    loadStats(abortController.signal);
+
+    return () => {
+      abortController.abort();
+    };
+  }, [loadStats]);
 
   if (loading) {
     return <LoadingState>Loading statistics...</LoadingState>;
@@ -135,5 +168,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ filters = {} }) => {
     </StatsGrid>
   );
 };
+
+const DashboardStats = React.memo(DashboardStatsComponent);
 
 export default DashboardStats;

@@ -57,24 +57,27 @@ class QuizService {
       tags: record.questions.tags,
       display_order: record.display_order,
       options: record.questions.options.sort((a, b) => a.display_order - b.display_order),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: record.questions.created_at,
+      updated_at: record.questions.updated_at,
     }));
   }
 
   async submitQuiz(params: SubmitQuizParams): Promise<QuizResult> {
-    // Mark quiz access as used
-    const { error: updateError } = await supabase
-      .from('quiz_access')
-      .update({ used_at: new Date().toISOString() })
-      .eq('quiz_id', params.quiz_id);
+    // Mark quiz access as used if accessId is provided
+    if (params.accessId) {
+      const { error: updateError } = await supabase
+        .from('quiz_access')
+        .update({ used_at: new Date().toISOString() })
+        .eq('id', params.accessId);
 
-    if (updateError) {
-      console.error('Error marking quiz access as used:', updateError);
+      if (updateError) {
+        console.error('Error marking quiz access as used:', updateError);
+      }
     }
 
     // Calculate score text
-    const score_text = params.score >= 80 ? 'PASS' : 'FAIL';
+    const score = params.score;
+    const score_text = score >= 80 ? 'PASS' : 'FAIL';
 
     // Generate PDF certificate for passing scores
     let pdf_url: string | undefined;
@@ -86,22 +89,34 @@ class QuizService {
       }
     }
 
+    // Get current user ID
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('No authenticated user found');
+    }
+
+    // Prepare metadata for the quiz result
+    const metadata: Record<string, any> = {};
+    
+    // Add optional metadata if provided
+    if (params.quiz_type) metadata.quiz_type = params.quiz_type;
+    if (params.ldap) metadata.ldap = params.ldap;
+    if (params.supervisor) metadata.supervisor = params.supervisor;
+    if (params.market) metadata.market = params.market;
+    
     // Submit quiz result
     const { data, error } = await supabase
       .from('quiz_results')
       .insert([
         {
           quiz_id: params.quiz_id,
-          quiz_type: params.quiz_type,
-          ldap: params.ldap || 'Anonymous',
-          supervisor: params.supervisor || 'Unknown',
-          market: params.market || 'Unknown',
-          score_value: params.score,
-          score_text,
-          answers: params.answers,
+          user_id: user.id,
+          score: score,
           time_taken: params.time_taken,
           completed_at: new Date().toISOString(),
-          pdf_url,
+          metadata: Object.keys(metadata).length > 0 ? metadata : null,
         },
       ])
       .select()
@@ -115,7 +130,7 @@ class QuizService {
     return data;
   }
 
-  private generateCertificatePDF(): Promise<string> {
+  generateCertificatePDF(): Promise<string> {
     // This is a placeholder for PDF generation logic
     // In a real implementation, this would generate a PDF certificate
     // and upload it to storage, returning the URL

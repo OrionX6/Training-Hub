@@ -86,7 +86,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       const handleTabKey = (e: KeyboardEvent) => {
         if (e.key === 'Tab') {
           const focusableElements = dialogRef.current?.querySelectorAll(
-            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
           );
 
           if (!focusableElements?.length) return;
@@ -132,8 +132,18 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   if (!isOpen) return null;
 
   return (
-    <Overlay role="dialog" aria-modal="true" aria-labelledby="dialog-title" aria-describedby="dialog-message" onClick={handleCancel}>
-      <DialogCard ref={dialogRef} onClick={(e: React.MouseEvent) => e.stopPropagation()} tabIndex={-1}>
+    <Overlay
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="dialog-title"
+      aria-describedby="dialog-message"
+      onClick={handleCancel}
+    >
+      <DialogCard
+        ref={dialogRef}
+        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+        tabIndex={-1}
+      >
         <Title id="dialog-title">{title}</Title>
         <Message id="dialog-message">{message}</Message>
         <Actions>

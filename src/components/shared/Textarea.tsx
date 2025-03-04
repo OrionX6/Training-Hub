@@ -66,7 +66,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         {(error || helperText) && <HelperText $isError={!!error}>{error || helperText}</HelperText>}
       </TextareaContainer>
     );
-  }
+  },
 );
 
 Textarea.displayName = 'Textarea';

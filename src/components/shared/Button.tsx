@@ -115,16 +115,12 @@ const StyledComponent = styled.button<StyledComponentProps>`
   justify-content: center;
   border-radius: 4px;
   font-weight: 500;
-  cursor: pointer;
+  cursor: ${props => (props.$loading || props.disabled ? 'not-allowed' : 'pointer')};
   transition: all 0.2s ease-in-out;
   width: ${props => (props.$fullWidth ? '100%' : 'auto')};
-  opacity: ${props => (props.$loading ? 0.7 : 1)};
-  pointer-events: ${props => (props.$loading ? 'none' : 'auto')};
+  opacity: ${props => (props.$loading || props.disabled ? 0.7 : 1)};
+  pointer-events: ${props => (props.$loading || props.disabled ? 'none' : 'auto')};
   text-decoration: none;
-
-  &:disabled {
-    cursor: not-allowed;
-  }
 
   ${props => getVariantStyles(props.$variant)}
   ${props => getSizeStyles(props.$size)}
@@ -165,7 +161,7 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, CombinedB
       as = 'button',
       ...props
     },
-    ref
+    ref,
   ) => {
     return (
       <StyledComponent
@@ -181,7 +177,7 @@ const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, CombinedB
         {children}
       </StyledComponent>
     );
-  }
+  },
 );
 
 Button.displayName = 'Button';

@@ -35,14 +35,15 @@ const Quiz: React.FC<QuizProps> = ({ quizAccess, userData }) => {
     score: number,
     questions: QuestionWithOptions[],
     answers: QuizAnswerState[],
-    timeTaken: number
+    timeTaken: number,
   ) => {
     // Check for unanswered questions
-    const unansweredCount = questions.length - answers.filter(a => a?.selectedIndices.length > 0).length;
+    const unansweredCount =
+      questions.length - answers.filter(a => a?.selectedIndices.length > 0).length;
     if (unansweredCount > 0) {
       toast.warning(
         `You have ${unansweredCount} unanswered question${unansweredCount > 1 ? 's' : ''}. Are you sure you want to submit?`,
-        { autoClose: 5000 }
+        { autoClose: 5000 },
       );
     }
 
@@ -68,23 +69,23 @@ const Quiz: React.FC<QuizProps> = ({ quizAccess, userData }) => {
         time_taken: timeTaken,
       });
 
-      // Store quiz results
-      const passed = result.score_text === 'PASS';
+      // Calculate pass/fail status and store quiz results
+      const passed = score >= 80;
       setQuizState({
         score,
         questions,
         answers,
         timeTaken,
         passed,
-        certificateUrl: result.pdf_url,
+        certificateUrl: passed ? await quizService.generateCertificatePDF() : undefined,
       });
 
       // Show completion message
       toast.success(
-        passed 
-          ? 'Congratulations! You have passed the quiz!' 
+        passed
+          ? 'Congratulations! You have passed the quiz!'
           : 'Quiz completed. Keep studying and try again.',
-        { autoClose: 5000 }
+        { autoClose: 5000 },
       );
 
       // Show the results
@@ -92,11 +93,11 @@ const Quiz: React.FC<QuizProps> = ({ quizAccess, userData }) => {
     } catch (err) {
       console.error('Error submitting quiz:', err);
       toast.error('Failed to submit quiz results');
-      navigate('/error', { 
-        state: { 
+      navigate('/error', {
+        state: {
           message: 'Failed to submit quiz results',
-          error: err instanceof Error ? err.message : String(err)
-        } 
+          error: err instanceof Error ? err.message : String(err),
+        },
       });
     } finally {
       setShowConfirmDialog(false);
@@ -124,10 +125,7 @@ const Quiz: React.FC<QuizProps> = ({ quizAccess, userData }) => {
 
   return (
     <>
-      <QuizContent
-        quizAccess={quizAccess}
-        onComplete={handleQuizComplete}
-      />
+      <QuizContent quizAccess={quizAccess} onComplete={handleQuizComplete} />
       <ConfirmDialog
         isOpen={showConfirmDialog}
         onClose={handleCancelSubmit}

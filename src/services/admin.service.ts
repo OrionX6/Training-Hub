@@ -57,22 +57,30 @@ class AdminService {
     filters: {
       startDate?: string;
       endDate?: string;
-      ldap?: string;
+      username?: string;
       supervisor?: string;
       market?: string;
-    } = {}
+    } = {},
   ): Promise<Stats> {
     const { data: stats, error } = await supabase.rpc('get_dashboard_stats', {
       start_date: filters.startDate,
       end_date: filters.endDate,
-      user_ldap: filters.ldap,
+      username: filters.username,
       user_supervisor: filters.supervisor,
       user_market: filters.market,
     });
 
     if (error) {
       console.error('Error fetching dashboard stats:', error);
-      throw new Error('Failed to fetch dashboard stats');
+      console.log('Full error response:', JSON.stringify(error, null, 2));
+      console.log('Attempted params:', {
+        start_date: filters.startDate,
+        end_date: filters.endDate,
+        username: filters.username,
+        user_supervisor: filters.supervisor,
+        user_market: filters.market,
+      });
+      throw new Error(`Failed to fetch dashboard stats: ${error.message}`);
     }
 
     return {

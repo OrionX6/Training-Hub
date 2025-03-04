@@ -8,23 +8,23 @@ jest.mock('./config/supabase', () => ({
   supabase: {
     auth: {
       onAuthStateChange: () => ({
-        data: { subscription: { unsubscribe: () => {} } }
+        data: { subscription: { unsubscribe: () => {} } },
       }),
       getSession: () => ({
-        data: { session: null }
-      })
+        data: { session: null },
+      }),
     },
     from: () => ({
       select: () => ({
         eq: () => ({
           single: () => ({
             data: null,
-            error: null
-          })
-        })
-      })
-    })
-  }
+            error: null,
+          }),
+        }),
+      }),
+    }),
+  },
 }));
 
 // Wrap component with AuthProvider

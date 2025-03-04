@@ -96,7 +96,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {(error || helperText) && <HelperText $isError={!!error}>{error || helperText}</HelperText>}
       </InputContainer>
     );
-  }
+  },
 );
 
 Input.displayName = 'Input';

@@ -6,7 +6,12 @@ import Card from '../shared/Card';
 
 interface QuizContentProps {
   quizAccess: QuizAccess;
-  onComplete: (score: number, questions: QuestionWithOptions[], answers: QuizAnswerState[], timeTaken: number) => void;
+  onComplete: (
+    score: number,
+    questions: QuestionWithOptions[],
+    answers: QuizAnswerState[],
+    timeTaken: number,
+  ) => void;
 }
 
 const Container = styled.div`
@@ -88,7 +93,16 @@ const QuizContent: React.FC<QuizContentProps> = ({ quizAccess, onComplete }) => 
         setLoading(true);
         const questions = await quizService.getQuizQuestions(quizAccess.quiz_id);
         setQuestions(questions);
-        setAnswers(new Array(questions.length).fill(null));
+        
+        // Initialize answers array with empty answer states
+        const initialAnswers = questions.map(q => ({
+          question_id: q.id,
+          selected_options: [],
+          selectedIndices: [],
+          attempts: 0
+        }));
+        
+        setAnswers(initialAnswers);
       } catch (err) {
         console.error('Error loading questions:', err);
         setError('Failed to load quiz questions');
@@ -104,17 +118,33 @@ const QuizContent: React.FC<QuizContentProps> = ({ quizAccess, onComplete }) => 
     setAnswers(prev => {
       const newAnswers = [...prev];
       const currentQuestion = questions[currentIndex];
-      const isMultiSelect = currentQuestion.type === 'multiple_choice_multiple' ||
-        currentQuestion.type === 'check_all_that_apply';
+      const isMultiSelect =
+        currentQuestion.type === 'check_all_that_apply' ||
+        currentQuestion.type === 'multiple_choice_multiple';
 
-      const currentAnswer = newAnswers[currentIndex] || { questionIndex, selectedIndices: [] };
+      // Get the current answer state
+      const currentAnswer = newAnswers[currentIndex];
+      
+      // Update selected indices
       const selectedIndices = isMultiSelect
         ? currentAnswer.selectedIndices.includes(optionIndex)
           ? currentAnswer.selectedIndices.filter(id => id !== optionIndex)
           : [...currentAnswer.selectedIndices, optionIndex].sort()
         : [optionIndex];
+      
+      // Update selected options (option IDs)
+      const selected_options = selectedIndices.map(
+        index => currentQuestion.options[index]?.id || ''
+      ).filter(id => id);
 
-      newAnswers[currentIndex] = { questionIndex, selectedIndices };
+      // Update the answer state
+      newAnswers[currentIndex] = {
+        ...currentAnswer,
+        selectedIndices,
+        selected_options,
+        attempts: currentAnswer.attempts + 1
+      };
+      
       return newAnswers;
     });
   };
@@ -126,7 +156,7 @@ const QuizContent: React.FC<QuizContentProps> = ({ quizAccess, onComplete }) => 
       if (!answer) return;
 
       const correctOptionIndices = question.options
-        .map((option, index) => option.is_correct ? index : -1)
+        .map((option, index) => (option.is_correct ? index : -1))
         .filter(index => index !== -1)
         .sort();
 

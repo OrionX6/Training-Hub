@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { StudyGuide } from '../../types';
 import { studyGuideService } from '../../services/study-guide.service';
@@ -50,14 +50,12 @@ const StudyGuideManager: React.FC = () => {
     category: '',
   });
 
-  useEffect(() => {
-    loadGuides();
-  }, []);
-
   const loadGuides = async () => {
     try {
       setLoading(true);
+      console.log('Fetching study guides for admin management');
       const guides = await studyGuideService.getStudyGuides();
+      console.log('Study guides for admin management fetched successfully');
       setGuides(guides);
       setError(null);
     } catch (err) {
@@ -67,6 +65,10 @@ const StudyGuideManager: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadGuides();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,7 +117,7 @@ const StudyGuideManager: React.FC = () => {
     return (
       <Card>
         <div style={{ color: 'var(--error-color)', textAlign: 'center' }}>{error}</div>
-        <Button variant="primary" onClick={loadGuides}>
+        <Button variant="primary" onClick={() => loadGuides()}>
           Retry
         </Button>
       </Card>
